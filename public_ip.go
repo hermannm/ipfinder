@@ -70,7 +70,7 @@ func queryAPI(url string, results chan string, errs chan error) {
 	results <- ipString
 }
 
-func startTimeout(seconds int, timeout chan bool) {
-	time.Sleep(time.Millisecond * time.Duration(seconds))
+func startTimeout(milliseconds int, timeout chan bool) {
+	time.Sleep(time.Millisecond * time.Duration(milliseconds))
 	timeout <- true
 }
