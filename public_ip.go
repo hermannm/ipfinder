@@ -42,7 +42,7 @@ func CustomFindPublicIP(opts QueryOptions) (string, error) {
 	}
 }
 
-func queryAPI(url string, results chan string, errs chan error) {
+func queryAPI(url string, results chan<- string, errs chan<- error) {
 	resp, err := http.Get(url)
 
 	if err != nil {
@@ -70,7 +70,7 @@ func queryAPI(url string, results chan string, errs chan error) {
 	results <- ipString
 }
 
-func startTimeout(milliseconds int, timeout chan bool) {
+func startTimeout(milliseconds int, timeout chan<- bool) {
 	time.Sleep(time.Millisecond * time.Duration(milliseconds))
 	timeout <- true
 }
