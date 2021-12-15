@@ -8,11 +8,17 @@ import (
 	"time"
 )
 
+// Calls CustomFindPublicIP with default query options.
 func FindPublicIP() (string, error) {
 	return CustomFindPublicIP(QueryOptions{})
 }
 
+// Calls a list of public IP APIs (given in query options) concurrently.
+// Returns the IP given by the first API to respond.
+// Returns error if no API responds within timeout limit (given in query options).
+// Also returns error if all API calls fail before timeout.
 func CustomFindPublicIP(opts QueryOptions) (string, error) {
+	// Checks validity of provided options, and injects defaults for lacking options.
 	err := opts.validate()
 	if err != nil {
 		return "", err
@@ -28,6 +34,7 @@ func CustomFindPublicIP(opts QueryOptions) (string, error) {
 		go queryAPI(url, results, errs)
 	}
 
+	// Checks for result, timeout or all API queries failing.
 	for {
 		select {
 		case ip := <-results:
@@ -42,8 +49,10 @@ func CustomFindPublicIP(opts QueryOptions) (string, error) {
 	}
 }
 
-func queryAPI(url string, results chan<- string, errs chan<- error) {
-	resp, err := http.Get(url)
+// Calls the given API URL, parses the result as an IP string, and sends it on the results channel.
+// If API call or IP parsing fail, instead sends error on the error channel.
+func queryAPI(api string, results chan<- string, errs chan<- error) {
+	resp, err := http.Get(api)
 
 	if err != nil {
 		errs <- err
@@ -70,6 +79,7 @@ func queryAPI(url string, results chan<- string, errs chan<- error) {
 	results <- ipString
 }
 
+// Sleeps for the provided duration, then sends true to the timeout channel.
 func startTimeout(milliseconds int, timeout chan<- bool) {
 	time.Sleep(time.Millisecond * time.Duration(milliseconds))
 	timeout <- true

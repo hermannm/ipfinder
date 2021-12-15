@@ -6,6 +6,9 @@ import (
 	"strings"
 )
 
+// Goes through network interfaces on your computer, and finds local IPs.
+// Returns a map of network interface names to a list of IP strings connected to that interface.
+// Returns error if it failed to find valid IPs.
 func FindLocalIPs() (map[string][]string, error) {
 	interfaces, err := net.Interfaces()
 
@@ -25,6 +28,7 @@ func FindLocalIPs() (map[string][]string, error) {
 		for _, address := range addresses {
 			var ip net.IP
 
+			// Asserts address as valid IP type.
 			switch v := address.(type) {
 			case *net.IPNet:
 				ip = v.IP
@@ -32,10 +36,12 @@ func FindLocalIPs() (map[string][]string, error) {
 				ip = v.IP
 			}
 
+			// Discards invalid or non-local IPs.
 			if ip == nil || !ip.IsPrivate() {
 				continue
 			}
 
+			// Removes the significant bit number, as this function only wishes to return the address in itself.
 			ipString := strings.Split(ip.String(), "/")[0]
 
 			localIPs[interf.Name] = append(localIPs[interf.Name], ipString)
