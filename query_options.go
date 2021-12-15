@@ -9,7 +9,7 @@ import (
 // or your own timeout limit.
 type QueryOptions struct {
 	// URLs to API endpoints that return your public IP as a simple string.
-	// See defaultAPIs for examples.
+	// See DefaultAPIs for examples.
 	APIs []string
 
 	// Time in milliseconds before the API calls should time out.
