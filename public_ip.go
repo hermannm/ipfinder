@@ -26,7 +26,7 @@ func CustomFindPublicIP(opts QueryOptions) (string, error) {
 
 	results := make(chan string, 1)
 	errs := make(chan error, len(opts.APIs))
-	timeout := make(chan bool, 1)
+	timeout := make(chan struct{}, 1)
 
 	go startTimeout(opts.Timeout, timeout)
 
@@ -79,8 +79,8 @@ func queryAPI(api string, results chan<- string, errs chan<- error) {
 	results <- ipString
 }
 
-// Sleeps for the provided duration, then sends true to the timeout channel.
-func startTimeout(milliseconds int, timeout chan<- bool) {
+// Sleeps for the provided duration, then sends to the timeout channel.
+func startTimeout(milliseconds int, timeout chan<- struct{}) {
 	time.Sleep(time.Millisecond * time.Duration(milliseconds))
-	timeout <- true
+	timeout <- struct{}{}
 }
