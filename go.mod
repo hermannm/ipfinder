@@ -1,3 +1,3 @@
-module github.com/hermannm/ipfinder
+module hermannm.dev/ipfinder
 
 go 1.17
