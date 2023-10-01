@@ -32,6 +32,7 @@ func FindPublicIP(ctx context.Context, apiURLs ...string) (net.IP, error) {
 	errChan := make(chan error)
 
 	ctx, cancelCtx := context.WithCancel(ctx)
+	defer cancelCtx()
 
 	for _, url := range apiURLs {
 		url := url // Avoids mutating loop variable
@@ -56,16 +57,13 @@ func FindPublicIP(ctx context.Context, apiURLs ...string) (net.IP, error) {
 	for {
 		select {
 		case ip := <-ipChan:
-			cancelCtx()
 			return ip, nil
 		case err := <-errChan:
 			errs = append(errs, err)
 			if len(errs) == len(apiURLs) {
-				cancelCtx()
 				return nil, wrap.Errors("all public IP API calls failed", errs...)
 			}
 		case <-ctx.Done():
-			cancelCtx()
 			return nil, ctx.Err()
 		}
 	}
