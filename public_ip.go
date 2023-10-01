@@ -1,86 +1,102 @@
 package ipfinder
 
 import (
-	"errors"
+	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"time"
+
+	"hermannm.dev/wrap"
 )
 
-// Calls CustomFindPublicIP with default query options.
-func FindPublicIP() (string, error) {
-	return CustomFindPublicIP(QueryOptions{})
+// The APIs which FindPublicIP calls to find your public IP.
+// These have almost guaranteed uptime, and no usage limit.
+var PublicIPAPIs = []string{
+	"https://api.ipify.org/",
+	"https://ip.seeip.org/",
 }
 
-// Calls a list of public IP APIs (given in query options) concurrently.
-// Returns the IP given by the first API to respond.
-// Returns error if no API responds within timeout limit (given in query options).
-// Also returns error if all API calls fail before timeout.
-func CustomFindPublicIP(opts QueryOptions) (string, error) {
-	// Checks validity of provided options, and injects defaults for lacking options.
-	err := opts.validate()
-	if err != nil {
-		return "", err
+// Queries the URLs listed in PublicIPAPIs for your public IP. Returns an error if all the APIs
+// failed, or if the given context canceled before a result was retrieved.
+func FindPublicIP(ctx context.Context) (net.IP, error) {
+	ipChan := make(chan net.IP)
+	errChan := make(chan error)
+
+	ctx, cancelCtx := context.WithCancel(ctx)
+
+	for _, url := range PublicIPAPIs {
+		url := url // Avoids mutating loop variable
+
+		go func() {
+			ip, err := queryPublicIPAPI(ctx, url)
+			if err == nil {
+				select {
+				case ipChan <- ip:
+				case <-ctx.Done():
+				}
+			} else {
+				select {
+				case errChan <- fmt.Errorf("%s: %w", url, err):
+				case <-ctx.Done():
+				}
+			}
+		}()
 	}
 
-	results := make(chan string, 1)
-	errs := make(chan error, len(opts.APIs))
-	timeout := make(chan struct{}, 1)
-
-	go startTimeout(opts.Timeout, timeout)
-
-	for _, url := range opts.APIs {
-		go queryAPI(url, results, errs)
-	}
-
-	// Checks for result, timeout or all API queries failing.
+	errs := make([]error, 0, len(PublicIPAPIs))
 	for {
 		select {
-		case ip := <-results:
+		case ip := <-ipChan:
+			cancelCtx()
 			return ip, nil
-		case <-timeout:
-			return "", errors.New("public IP API queries timed out")
-		default:
-			if len(errs) == cap(errs) {
-				return "", errors.New("all public IP API queries failed")
+		case err := <-errChan:
+			errs = append(errs, err)
+			if len(errs) == len(PublicIPAPIs) {
+				cancelCtx()
+				return nil, wrap.Errors("all public IP API calls failed", errs...)
 			}
+		case <-ctx.Done():
+			cancelCtx()
+			return nil, ctx.Err()
 		}
 	}
 }
 
-// Calls the given API URL, parses the result as an IP string, and sends it on the results channel.
-// If API call or IP parsing fail, instead sends error on the error channel.
-func queryAPI(api string, results chan<- string, errs chan<- error) {
-	resp, err := http.Get(api)
-
+func queryPublicIPAPI(ctx context.Context, apiURL string) (net.IP, error) {
+	req, err := http.NewRequest(http.MethodGet, apiURL, nil)
 	if err != nil {
-		errs <- err
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		errs <- errors.New("API response not OK")
-		return
+		return nil, err
 	}
 
-	ip, err := io.ReadAll(resp.Body)
+	req = req.WithContext(ctx)
+
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		errs <- err
-		return
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		if err == nil {
+			return nil, fmt.Errorf(
+				"api responded with status code %d, message '%s'",
+				res.StatusCode,
+				string(body),
+			)
+		} else {
+			return nil, fmt.Errorf("api responded with status code %d", res.StatusCode)
+		}
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	ipString := string(ip)
-	if net.ParseIP(ipString) == nil {
-		errs <- errors.New("invalid IP returned from API")
-		return
+	bodyString := string(body)
+	ip := net.ParseIP(bodyString)
+	if ip == nil {
+		return nil, fmt.Errorf("failed to parse api response '%s' as IP", bodyString)
 	}
 
-	results <- ipString
-}
-
-// Sleeps for the provided duration, then sends to the timeout channel.
-func startTimeout(milliseconds int, timeout chan<- struct{}) {
-	time.Sleep(time.Millisecond * time.Duration(milliseconds))
-	timeout <- struct{}{}
+	return ip, nil
 }

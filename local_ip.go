@@ -2,54 +2,63 @@ package ipfinder
 
 import (
 	"errors"
+	"fmt"
 	"net"
-	"strings"
+
+	"hermannm.dev/wrap"
 )
 
-// Goes through network interfaces on your computer, and finds local IPs.
-// Returns a map of network interface names to a list of IP strings connected to that interface.
-// Returns error if it failed to find valid IPs.
-func FindLocalIPs() (map[string][]string, error) {
-	interfaces, err := net.Interfaces()
+type LocalIP struct {
+	Address          net.IP
+	NetworkInterface net.Interface
+}
 
+// Goes through network interfaces on your computer to find your local IP addresses.
+// Returns a list of the found addresses along with their associated network interface.
+func FindLocalIPs() ([]LocalIP, error) {
+	networkInterfaces, err := net.Interfaces()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get network interfaces: %w", err)
 	}
 
-	localIPs := make(map[string][]string)
+	var localIPs []LocalIP
+	var errs []error
 
-	for _, interf := range interfaces {
-		addresses, err := interf.Addrs()
-
+	for _, networkInterface := range networkInterfaces {
+		addresses, err := networkInterface.Addrs()
 		if err != nil {
+			errs = append(errs, fmt.Errorf(
+				"failed to get addresses for network interface '%s': %w",
+				networkInterface.Name,
+				err,
+			))
 			continue
 		}
 
 		for _, address := range addresses {
 			var ip net.IP
-
-			// Asserts address as valid IP type.
-			switch v := address.(type) {
+			switch address := address.(type) {
 			case *net.IPNet:
-				ip = v.IP
+				ip = address.IP
 			case *net.IPAddr:
-				ip = v.IP
+				ip = address.IP
 			}
 
-			// Discards invalid or non-local IPs.
+			// Discards invalid or non-local IPs
 			if ip == nil || !ip.IsPrivate() {
 				continue
 			}
 
-			// Removes the significant bit number, as this function only wishes to return the address in itself.
-			ipString := strings.Split(ip.String(), "/")[0]
-
-			localIPs[interf.Name] = append(localIPs[interf.Name], ipString)
+			localIPs = append(localIPs, LocalIP{Address: ip, NetworkInterface: networkInterface})
 		}
 	}
 
 	if len(localIPs) == 0 {
-		return nil, errors.New("no local IPs found")
+		if len(errs) == 0 {
+			return nil, errors.New("no valid local IPs found")
+		} else {
+			return nil, wrap.Errors("no valid local IPs found", errs...)
+		}
 	}
 
 	return localIPs, nil
