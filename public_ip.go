@@ -11,22 +11,29 @@ import (
 	"hermannm.dev/wrap"
 )
 
-// PublicIPAPIs are the URLs which FindPublicIP calls to find your public IP.
+// DefaultPublicIPAPIs are the default URLs used to find your public IP.
 // These have almost guaranteed uptime, and no usage limit.
-var PublicIPAPIs = []string{
+var DefaultPublicIPAPIs = []string{
 	"https://api.ipify.org/",
 	"https://ip.seeip.org/",
 }
 
-// FindPublicIP queries the URLs listed in PublicIPAPIs for your public IP. It errors if all API
-// calls failed, or if the given context canceled before a result was received.
-func FindPublicIP(ctx context.Context) (net.IP, error) {
+// FindPublicIP queries the given API URLs for your public IP, and returns the first to respond.
+// If no URLs are given, it uses the ones in DefaultPublicIPAPIs.
+// It expects the given APIs to return an IP only, in plain-text.
+//
+// It errors if all API calls fail, or if the given context cancels before a result is received.
+func FindPublicIP(ctx context.Context, apiURLs ...string) (net.IP, error) {
+	if len(apiURLs) == 0 {
+		apiURLs = DefaultPublicIPAPIs
+	}
+
 	ipChan := make(chan net.IP)
 	errChan := make(chan error)
 
 	ctx, cancelCtx := context.WithCancel(ctx)
 
-	for _, url := range PublicIPAPIs {
+	for _, url := range apiURLs {
 		url := url // Avoids mutating loop variable
 
 		go func() {
@@ -45,7 +52,7 @@ func FindPublicIP(ctx context.Context) (net.IP, error) {
 		}()
 	}
 
-	errs := make([]error, 0, len(PublicIPAPIs))
+	errs := make([]error, 0, len(apiURLs))
 	for {
 		select {
 		case ip := <-ipChan:
@@ -53,7 +60,7 @@ func FindPublicIP(ctx context.Context) (net.IP, error) {
 			return ip, nil
 		case err := <-errChan:
 			errs = append(errs, err)
-			if len(errs) == len(PublicIPAPIs) {
+			if len(errs) == len(apiURLs) {
 				cancelCtx()
 				return nil, wrap.Errors("all public IP API calls failed", errs...)
 			}
