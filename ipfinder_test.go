@@ -16,6 +16,7 @@ func TestFindPublicIP(t *testing.T) {
 	if publicIP == nil {
 		t.Fatal("public IP was nil")
 	}
+	t.Logf("Found public IP %s", publicIP.String())
 }
 
 func TestFindPublicIPWithTimeout(t *testing.T) {
@@ -33,9 +34,12 @@ func TestFindLocalIPs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("received error: %v", err)
 	}
+
 	for _, ip := range localIPs {
 		if ip.Address == nil {
 			t.Fatal("local IP was nil")
 		}
+
+		t.Logf("Found local IP %s (interface: %s)", ip.Address.String(), ip.NetworkInterface.Name)
 	}
 }
