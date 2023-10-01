@@ -1,4 +1,4 @@
-// Package ipfinder provides functions for finding your public and local IP addresses.
+// Package ipfinder provides functions for finding your local and public IP addresses.
 package ipfinder
 
 import (
