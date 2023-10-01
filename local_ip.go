@@ -13,8 +13,8 @@ type LocalIP struct {
 	NetworkInterface net.Interface
 }
 
-// Goes through network interfaces on your computer to find your local IP addresses.
-// Returns a list of the found addresses along with their associated network interface.
+// FindLocalIPs goes through network interfaces on your computer to find your local IP addresses.
+// It returns a list of the found addresses, along with their associated network interface.
 func FindLocalIPs() ([]LocalIP, error) {
 	networkInterfaces, err := net.Interfaces()
 	if err != nil {

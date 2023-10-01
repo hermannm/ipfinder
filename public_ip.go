@@ -1,3 +1,4 @@
+// Package ipfinder provides functions for finding your public and local IP addresses.
 package ipfinder
 
 import (
@@ -10,15 +11,15 @@ import (
 	"hermannm.dev/wrap"
 )
 
-// The APIs which FindPublicIP calls to find your public IP.
+// PublicIPAPIs are the URLs which FindPublicIP calls to find your public IP.
 // These have almost guaranteed uptime, and no usage limit.
 var PublicIPAPIs = []string{
 	"https://api.ipify.org/",
 	"https://ip.seeip.org/",
 }
 
-// Queries the URLs listed in PublicIPAPIs for your public IP. Returns an error if all the APIs
-// failed, or if the given context canceled before a result was retrieved.
+// FindPublicIP queries the URLs listed in PublicIPAPIs for your public IP. It errors if all API
+// calls failed, or if the given context canceled before a result was received.
 func FindPublicIP(ctx context.Context) (net.IP, error) {
 	ipChan := make(chan net.IP)
 	errChan := make(chan error)

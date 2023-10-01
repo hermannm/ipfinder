@@ -1,6 +1,6 @@
 # ipfinder
 
-Go utility package for finding your public IP and local IPs.
+Go utility package for finding your local and public IP addresses.
 
 Run `go get hermannm.dev/ipfinder` to add it to your project!
 
