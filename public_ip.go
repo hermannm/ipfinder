@@ -4,11 +4,10 @@ package ipfinder
 import (
 	"context"
 	"fmt"
+	"hermannm.dev/wrap/ctxwrap"
 	"io"
 	"net"
 	"net/http"
-
-	"hermannm.dev/wrap"
 )
 
 // DefaultPublicIPAPIs are the default URLs used to find your public IP.
@@ -61,7 +60,7 @@ func FindPublicIP(ctx context.Context, apiURLs ...string) (net.IP, error) {
 		case err := <-errChan:
 			errs = append(errs, err)
 			if len(errs) == len(apiURLs) {
-				return nil, wrap.Errors("all public IP API calls failed", errs...)
+				return nil, ctxwrap.Errors(ctx, errs, "all public IP API calls failed")
 			}
 		case <-ctx.Done():
 			return nil, ctx.Err()

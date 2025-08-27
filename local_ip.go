@@ -27,11 +27,13 @@ func FindLocalIPs() ([]LocalIP, error) {
 	for _, networkInterface := range networkInterfaces {
 		addresses, err := networkInterface.Addrs()
 		if err != nil {
-			errs = append(errs, fmt.Errorf(
-				"failed to get addresses for network interface '%s': %w",
-				networkInterface.Name,
-				err,
-			))
+			errs = append(
+				errs, fmt.Errorf(
+					"failed to get addresses for network interface '%s': %w",
+					networkInterface.Name,
+					err,
+				),
+			)
 			continue
 		}
 
@@ -57,7 +59,7 @@ func FindLocalIPs() ([]LocalIP, error) {
 		if len(errs) == 0 {
 			return nil, errors.New("no valid local IPs found")
 		} else {
-			return nil, wrap.Errors("no valid local IPs found", errs...)
+			return nil, wrap.Errors(errs, "no valid local IPs found")
 		}
 	}
 
