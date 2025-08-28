@@ -4,10 +4,11 @@ package ipfinder
 import (
 	"context"
 	"fmt"
-	"hermannm.dev/wrap/ctxwrap"
 	"io"
 	"net"
 	"net/http"
+
+	"hermannm.dev/wrap/ctxwrap"
 )
 
 // DefaultPublicIPAPIs are the default URLs used to find your public IP.
