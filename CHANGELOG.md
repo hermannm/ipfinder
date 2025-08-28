@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.2.1] - 2025-08-28
+
+- Update dependencies
+
 ## [v0.2.0] - 2023-10-01
 
 - Add `Context` argument to `FindPublicIP` to support cancellation
@@ -9,7 +13,9 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/hermannm/ipfinder/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/hermannm/ipfinder/compare/v0.2.1...HEAD
+
+[v0.2.1]: https://github.com/hermannm/ipfinder/compare/v0.2.0...v0.2.1
 
 [v0.2.0]: https://github.com/hermannm/ipfinder/compare/v0.1.0...v0.2.0
 
