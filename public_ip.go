@@ -70,12 +70,10 @@ func FindPublicIP(ctx context.Context, apiURLs ...string) (net.IP, error) {
 }
 
 func queryPublicIPAPI(ctx context.Context, apiURL string) (net.IP, error) {
-	req, err := http.NewRequest(http.MethodGet, apiURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	req = req.WithContext(ctx)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
