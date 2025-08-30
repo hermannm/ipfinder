@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 
+	"hermannm.dev/errclose"
 	"hermannm.dev/wrap/ctxwrap"
 )
 
@@ -69,17 +70,17 @@ func FindPublicIP(ctx context.Context, apiURLs ...string) (net.IP, error) {
 	}
 }
 
-func queryPublicIPAPI(ctx context.Context, apiURL string) (net.IP, error) {
+func queryPublicIPAPI(ctx context.Context, apiURL string) (ip net.IP, returnedErr error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req) //nolint:bodyclose // Closed by errclose below
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer errclose.Close(res.Body, &returnedErr, "response body")
 
 	body, err := io.ReadAll(res.Body)
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
@@ -97,7 +98,7 @@ func queryPublicIPAPI(ctx context.Context, apiURL string) (net.IP, error) {
 	}
 
 	bodyString := string(body)
-	ip := net.ParseIP(bodyString)
+	ip = net.ParseIP(bodyString)
 	if ip == nil {
 		return nil, fmt.Errorf("failed to parse api response '%s' as IP", bodyString)
 	}
