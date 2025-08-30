@@ -36,8 +36,6 @@ func FindPublicIP(ctx context.Context, apiURLs ...string) (net.IP, error) {
 	defer cancelCtx()
 
 	for _, url := range apiURLs {
-		url := url // Avoids mutating loop variable
-
 		go func() {
 			ip, err := queryPublicIPAPI(ctx, url)
 			if err == nil {
