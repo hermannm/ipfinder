@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.2.2] - 2025-08-30
+
+- Close response body after querying public IP APIs
+- Bump Go version to remove now-redundant loop variable copying
+
 ## [v0.2.1] - 2025-08-28
 
 - Update dependencies
@@ -13,7 +18,9 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/hermannm/ipfinder/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/hermannm/ipfinder/compare/v0.2.2...HEAD
+
+[v0.2.2]: https://github.com/hermannm/ipfinder/compare/v0.2.1...v0.2.2
 
 [v0.2.1]: https://github.com/hermannm/ipfinder/compare/v0.2.0...v0.2.1
 
