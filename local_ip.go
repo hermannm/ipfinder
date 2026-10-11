@@ -1,11 +1,8 @@
 package ipfinder
 
 import (
-	"errors"
 	"fmt"
 	"net"
-
-	"hermannm.dev/wrap"
 )
 
 type LocalIP struct {
@@ -56,11 +53,7 @@ func FindLocalIPs() ([]LocalIP, error) {
 	}
 
 	if len(localIPs) == 0 {
-		if len(errs) == 0 {
-			return nil, errors.New("no valid local IPs found")
-		} else {
-			return nil, wrap.Errors(errs, "no valid local IPs found")
-		}
+		return nil, wrapErrors("no valid local IPs found", errs)
 	}
 
 	return localIPs, nil

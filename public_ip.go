@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"hermannm.dev/errclose"
-	"hermannm.dev/wrap/ctxwrap"
 )
 
 // DefaultPublicIPAPIs are the default URLs used to find your public IP.
@@ -60,7 +59,7 @@ func FindPublicIP(ctx context.Context, apiURLs ...string) (net.IP, error) {
 		case err := <-errChan:
 			errs = append(errs, err)
 			if len(errs) == len(apiURLs) {
-				return nil, ctxwrap.Errors(ctx, errs, "all public IP API calls failed")
+				return nil, wrapErrors("all public IP API calls failed", errs)
 			}
 		case <-ctx.Done():
 			return nil, ctx.Err()
