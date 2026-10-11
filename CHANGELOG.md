@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.2.3] - 2026-10-11
+
+- Remove dependency on `hermannm.dev/wrap` package
+
 ## [v0.2.2] - 2025-08-30
 
 - Close response body after querying public IP APIs
@@ -18,7 +22,9 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/hermannm/ipfinder/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/hermannm/ipfinder/compare/v0.2.3...HEAD
+
+[v0.2.3]: https://github.com/hermannm/ipfinder/compare/v0.2.2...v0.2.3
 
 [v0.2.2]: https://github.com/hermannm/ipfinder/compare/v0.2.1...v0.2.2
 
